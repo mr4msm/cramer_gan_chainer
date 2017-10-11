@@ -3,16 +3,6 @@
 
 import cv2
 import numpy as np
-from scipy.io import wavfile
-
-
-def normalize(data):
-    assert isinstance(data, np.ndarray), type(data)
-
-    if data.dtype.kind != 'f':
-        data = data.astype(np.float32)
-
-    return data / np.abs(data).max()
 
 
 class ImageBatchGenerator(object):
