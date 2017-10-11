@@ -14,6 +14,7 @@ $ python generate_image.py example_food-101/config.py -r 1 -p example_food-101/t
 ```
 
 ## Example Food-101
+![example_image_food-101](https://raw.githubusercontent.com/mr4msm/cramer_gan_chainer/master/example_food-101/example_update-000040000.png)
 
 # Dataset
 I resized the images to 64x64 before training.
