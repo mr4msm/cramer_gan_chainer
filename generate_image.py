@@ -4,12 +4,12 @@
 import argparse
 import chainer
 import cv2
-import imp
 import numpy as np
 import os
 import random
-from chainer import cuda, serializers
-from train_cramer_gan import load_module
+from chainer import cuda
+
+from commons import load_module, initialize_model
 
 
 def parse_arguments():
@@ -33,7 +33,7 @@ def parse_arguments():
         help='a path of output image file'
     )
     parser.add_argument(
-        '-p', '--parameter', default=None,
+        '-p', '--param', default=None,
         help='trained parameters saved as serialized array (.npz | .h5)'
     )
     parser.add_argument(
@@ -44,19 +44,8 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def generate_image():
+def generate_image(config, gpu_id=-1, n_lines=8, param=None, random_seed=0):
     """Generate image using a Generator trained with GAN."""
-    # parse arguments
-    args = parse_arguments()
-    config = load_module(args.config)
-    gpu_id = args.gpu
-
-    # make output directory, if needed
-    out_dir, _ = os.path.split(args.output)
-    if not os.path.exists(out_dir):
-        os.makedirs(out_dir)
-        print('mkdir ' + out_dir)
-    assert os.path.isdir(out_dir)
 
     # setup network model and constant values to control image generation
     z_vec_dim = config.Z_VECTOR_DIM
@@ -66,26 +55,13 @@ def generate_image():
     image_generator = config.Generator()
 
     # load parameters for Generator
-    if args.parameter is not None:
-        ext = os.path.splitext(args.parameter)[1]
-
-        if ext == '.npz':
-            load_func = serializers.load_npz
-        elif ext == '.h5':
-            load_func = serializers.load_hdf5
-        else:
-            raise TypeError(
-                'The format of \"{}\" is not supported.'.format(args.parameter))
-
-        load_func(args.parameter, image_generator)
-        print('load ' + args.parameter)
+    initialize_model(image_generator, param)
 
     # set random seed
-    random.seed(args.random_seed)
-    np.random.seed(args.random_seed)
+    random.seed(random_seed)
+    np.random.seed(random_seed)
 
     # determine z vector in latent space
-    n_lines = args.n_lines
     if n_lines < 1:
         n_lines = 1
     z = np.random.normal(loc=0., scale=1.,
@@ -103,7 +79,7 @@ def generate_image():
 
     # generate image
     gen_out = ((cuda.to_cpu(image_generator(z).data) + 1.) *
-               255. / 2.).astype(np.uint8).transpose((0, 2, 3, 1))
+               255.99 / 2.).astype(np.uint8).transpose((0, 2, 3, 1))
 
     image = np.empty((n_lines * height, n_lines * width, channel),
                      dtype=np.uint8)
@@ -112,9 +88,24 @@ def generate_image():
             image[y * height:(y + 1) * height,
                   x * width:(x + 1) * width] = gen_out[y * n_lines + x]
 
-    cv2.imwrite(args.output, image)
-    print('save ' + args.output)
+    return image
 
 
 if __name__ == '__main__':
-    generate_image()
+    # parse arguments
+    args = parse_arguments()
+    config = load_module(args.config)
+
+    # make output directory, if needed
+    out_dir, _ = os.path.split(args.output)
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+        print('mkdir ' + out_dir)
+    assert os.path.isdir(out_dir)
+
+    cv2.imwrite(args.output,
+                generate_image(config, gpu_id=args.gpu,
+                               n_lines=args.n_lines,
+                               param=args.param,
+                               random_seed=args.random_seed))
+    print('save ' + args.output)
