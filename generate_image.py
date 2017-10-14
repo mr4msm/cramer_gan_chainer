@@ -9,7 +9,7 @@ import os
 import random
 from chainer import cuda
 
-from commons import load_module, initialize_model
+from commons import initialize_model, load_module
 
 
 def parse_arguments():
@@ -46,7 +46,6 @@ def parse_arguments():
 
 def generate_image(config, gpu_id=-1, n_lines=8, param=None, random_seed=0):
     """Generate image using a Generator trained with GAN."""
-
     # setup network model and constant values to control image generation
     z_vec_dim = config.Z_VECTOR_DIM
     height = config.HEIGHT
