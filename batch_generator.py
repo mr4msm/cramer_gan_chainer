@@ -68,6 +68,9 @@ class ImageBatchGenerator(object):
     def n_samples(self):
         return len(self._input_files)
 
-    def next(self):
-        self._batch = self._batch_generator.next()
+    def __next__(self):
+        self._batch = next(self._batch_generator)
         return self._batch
+
+    def next(self):
+        return self.__next__()

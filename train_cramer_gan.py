@@ -152,7 +152,7 @@ if __name__ == '__main__':
     while optimizer_gen.t < update_max:
 
         for _ in range(update_cri_per_gen):
-            x_t = batch_generator.next()
+            x_t = next(batch_generator)
             if gpu_id >= 0:
                 x_t = cuda.to_gpu(x_t, device=gpu_id)
 
@@ -172,12 +172,11 @@ if __name__ == '__main__':
             loss_s = F.sum(f_critic(h_t, h_g2)) - F.sum(f_critic(h_g1, h_g2))
 
             # calculate gradient penalty
-            differences = x_g1.data - x_t
             alpha = xp.random.uniform(low=0., high=1.,
                                       size=((batch_size,) +
-                                            (1,) * (differences.ndim - 1))
+                                            (1,) * (x_t.ndim - 1))
                                       ).astype('float32')
-            interpolates = Variable(x_t + alpha * differences)
+            interpolates = Variable((1. - alpha) * x_t + alpha * x_g1.data)
             h_i = model_cri(interpolates)
             gradients = chainer.grad([f_critic(h_i, h_g2)],
                                      [interpolates],
@@ -195,7 +194,7 @@ if __name__ == '__main__':
 
             sum_loss_c += float(loss_c.data) / update_cri_per_gen
 
-        x_t = batch_generator.next()
+        x_t = next(batch_generator)
         if gpu_id >= 0:
             x_t = cuda.to_gpu(x_t, device=gpu_id)
 

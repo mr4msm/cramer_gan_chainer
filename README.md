@@ -1,8 +1,8 @@
-This is an implementation of [The Cramer Distance as a Solution to Biased Wasserstein Gradients](https://arxiv.org/abs/1705.10743) in [Chainer](https://github.com/chainer/chainer) v3.0.0rc1.
+This is an implementation of [The Cramer Distance as a Solution to Biased Wasserstein Gradients](https://arxiv.org/abs/1705.10743) in [Chainer](https://github.com/chainer/chainer) v3.0.0.
 
 # Requirements
-Chainer v3.0.0rc1, OpenCV, etc.  
-The scripts work on Python 2.7.13.
+Chainer v3.0.0, OpenCV, etc.  
+The scripts work on Python 2.7.13 and 3.6.1.
 
 # How to generate images
 ```
