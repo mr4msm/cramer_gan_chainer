@@ -182,29 +182,18 @@ if __name__ == '__main__':
                                       ).astype('float32')
             interpolates = Variable((1. - alpha) * x_t + alpha * x_g1.data)
             h_i = model_cri(interpolates)
-            # print(f_critic(h_i, h_g2))
             gradients = chainer.grad([f_critic(h_i, h_g2)],
                                      [interpolates],
                                      enable_double_backprop=True)[0]
-            print('gradients, ', gradients)
             slopes = l2_norm(gradients)
-            # print(slopes)
             gradient_penalty = gp_lambda * F.sum((slopes - 1.) * (slopes - 1.))
-            # print(gradient_penalty)
-
-            # print(f_critic(h_i, h_g2))
-            # print(interpolates.shape)
-            # print(h_t.data, h_g1.data, h_g2.data, h_i.data)
 
             loss_cri = gradient_penalty - loss_s
             loss_cri /= batch_size
-            # print('loss_cri, ', loss_cri)
 
             # update Critic
             model_cri.cleargrads()
             loss_cri.backward()
-            for name, param in model_cri.namedparams():
-                print(name, param.grad)
             optimizer_cri.update()
 
             sum_loss_cri += float(loss_cri.data) / update_cri_per_gen
