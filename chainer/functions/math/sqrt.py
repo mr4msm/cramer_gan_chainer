@@ -1,13 +1,16 @@
-import numpy
-
 from chainer import cuda
-from chainer import function
 from chainer import function_node
 from chainer import utils
 from chainer.utils import type_check
 
 
 class Sqrt(function_node.FunctionNode):
+    """Sqrt based on FunctionNode.
+
+    note: not for more than 2-times differential,
+          because div functions based on FunctionNode
+          have not been implemented yet.
+    """
 
     @property
     def label(self):
@@ -17,19 +20,20 @@ class Sqrt(function_node.FunctionNode):
         type_check.expect(in_types.size() == 1)
         type_check.expect(in_types[0].dtype.kind == 'f')
 
-    def forward_cpu(self, x):
-        self.retain_inputs(())
+    def forward(self, inputs):
+        x, = inputs
+        xp = cuda.get_array_module(x)
         self.retain_outputs((0,))
-        return utils.force_array(numpy.sqrt(x[0])),
-
-    def forward_gpu(self, x):
-        self.retain_inputs(())
-        self.retain_outputs((0,))
-        return cuda.cupy.sqrt(x[0]),
+        return utils.force_array(xp.sqrt(x)),
 
     def backward(self, indexes, gy):
-        y = self.get_retained_outputs()[0]
-        return gy[0] / (y * 2.),
+        # incomplete
+        y, = self.get_retained_outputs()
+        xp = cuda.get_array_module(y.data)
+        if xp.any(y.data == 0.):
+            return gy[0] / (y * 2. + 1e-6),
+        else:
+            return gy[0] / (y * 2.),
 
 
 def sqrt(x):
